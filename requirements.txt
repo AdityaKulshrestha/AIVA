@@ -7,3 +7,4 @@ langchain
 crewai[tools]
 semantic-router[fastembed]
 semantic-router
+tkintertable

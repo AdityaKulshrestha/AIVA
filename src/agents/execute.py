@@ -10,6 +10,12 @@ from langchain_openai import ChatOpenAI
 from portkey_ai import createHeaders, PORTKEY_GATEWAY_URL
 from crewai import Agent, Task, Crew, Process
 from dotenv import load_dotenv
+from crewai_tools import (
+    # DirectoryReadTool,
+    # FileReadTool,
+    SerperDevTool,
+    # WebsiteSearchTool
+)
 
 
 class CLITool:
@@ -69,11 +75,11 @@ class Coder(Agent):
     def __init__(self):
         super().__init__(
             role='Python Coder',
-            goal="Generate the python code using PyAutoGUI for executing the request from user side. Always use only keyboards based commmands to complete the request",
+            goal="Generate the python code using PyAutoGUI for executing the request from user side. Only using keyboards based commmands of PyAutoGUI to complete the request",
             backstory="""
-                Expert at breaking down a request for windows system into simpler steps keyboard based steps, then writing the code for keyboard based commands in PyAutoGUI. Here's how I tackle these specific queries:
+                Expert at breaking down a request for windows system into simpler steps based steps using keyboard shortcuts, then writing the code for commands in PyAutoGUI. I only use keyboard commands to run the given query. Here's how I tackle these specific queries:
               - Break down the user request into smaller steps and most easiest flows.
-              - Identify which keyboards keys are required to execute the workflow of the smaller step.
+              - Identify which keyboards keys are required to execute the workflow of the smaller step. To locate a folder/file always use file explorer search bar - Win + E and then Control + F.
               - Write a python code for the given identified keyboards key using PyAutoGUI with 2 second delay after each step.
               - Execute the generated python code.
               - Synthesize information from all sources to provide a comprehensive and current report on the injury status of the player or team, with attention to the latest updates and expert opinions on recovery and potential game participation.
@@ -89,21 +95,16 @@ class Coder(Agent):
 class WebSearcher(Agent):
     def __init__(self):
         super().__init__(
-            role='NBA General Researcher',
-            goal="Conduct focused and efficient research on specific NBA topics. Only ever use verified, up to date information found from your tools.",
-            backstory="""
-               Focused on analyzing NBA betting market movements using search tools. My method involves:
-
-                Use DuckDuckGo to search for market trends, like 'NBA betting odds changes 2024'.
-                Review the search summaries for patterns or significant shifts in the betting landscape.
-                Utilize the Google search function for specific queries, such as 'impact of player X injury on NBA betting odds'. This can uncover detailed insights.
-                Integrate data from both tools to provide a well-rounded analysis of the betting market."
-            """,
+            role='Searches on the internet for a given query',
+            goal="Browse the internet to search for a given query and provide an abstract answer to it.",
+            backstory='Provies the best answer to the user query based on information provided by the tool',
             verbose=True,
-            allow_delegation=False,
-            tools=[],
+            # allow_delegation=False,
+            tools=[SerperDevTool()],
             llm=llm
         )
+
+
 #
 #
 # class MarketAnalystAgent(Agent):
@@ -207,6 +208,16 @@ mathematic_route = Route(name="mathematics_tasks", utterances=[
     "give me the sum of fourty four plus thirty six plus fifty seven"
 ])
 
+website_route = Route(name="website_search", utterances=[
+    "what is the weather today in bangalore",
+    "give me top five news for today",
+    "Who was Mona Lisa",
+    "what are the most popular tourist attraction in India",
+    "Who won the world cup 2024",
+    "who won the nobel prize for 2024?",
+    "give me the lyrics of mai mastana"
+])
+
 # general_route = Route(name="general", utterances=[
 #     "season highlights",
 #     "game recaps",
@@ -246,7 +257,7 @@ mathematic_route = Route(name="mathematics_tasks", utterances=[
 
 # Create tasks for your agents
 task1 = Task(
-    description="""Break down the user request into smaller steps and most easiest flows and identify which keyboards keys are 
+    description="""Break down the user request into smaller steps and most easiest flows on keyboard based actions ONLY.
     required to execute the workflow of the smaller step for the given query : {user_command}""",
     expected_output="A list of small user friendly steps to execute on windows machine. Don't return any code, "
                     "only give the steps.",
@@ -265,10 +276,24 @@ maths_task = Task(
     agent=MathematicsExpert()
 )
 
+webtask = Task(
+    description="Given a user query, search the internet and gather the information and answer the user: {user_command}",
+    expected_output="Response to the original query",
+    agent=WebSearcher()
+)
+
+# websearch = Task(
+#     description="""Break down the user request into smaller steps and most easiest flows and identify which keyboards keys are
+#     required to execute the workflow of the smaller step for the given query : {user_command}""",
+#     expected_output="A list of small user friendly steps to execute on windows machine. Don't return any code, "
+#                     "only give the steps.",
+#     agent=Coder()
+# )
+
 # Initialize route layer
 encoder = FastEmbedEncoder()
 route_layer = RouteLayer(encoder=encoder,
-                         routes=[mathematic_route, windows_route])
+                         routes=[mathematic_route, windows_route, website_route])
 
 agent_route_map = {
     "mathematics_tasks": {
@@ -287,6 +312,11 @@ agent_route_map = {
             - Ensure the code executes smoothly.
             """
     },
+    'website_search': {
+        'agent_class': WebSearcher,
+        'tasks': [webtask],
+        "task_description": "Search for a given query on internet using the given tools"
+    }
 }
 import datetime
 
