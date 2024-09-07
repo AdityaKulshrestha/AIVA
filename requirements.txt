@@ -1,0 +1,7 @@
+python-dotenv
+pyautogui
+crewai
+portkey-ai
+langchain_openai
+langchain
+crewai[tools]
