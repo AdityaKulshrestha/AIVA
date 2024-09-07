@@ -5,3 +5,5 @@ portkey-ai
 langchain_openai
 langchain
 crewai[tools]
+semantic-router[fastembed]
+semantic-router
