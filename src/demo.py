@@ -6,6 +6,11 @@ import requests
 import threading
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+from agents.main import llm_anthropic
+from agents.execute import natural_language_research
+
+load_dotenv()
 
 
 class AudioRecorderApp:
@@ -93,20 +98,26 @@ class AudioRecorderApp:
 
     def send_for_transcription(self, filename):
         # Replace with your actual endpoint URL
-        endpoint_url = "https://api.sarvam.ai/speech-to-text-translate"
+        endpoint_url = "https://api.sarvam.ai/speech-to-text"
 
-        headers = {"Content-Type": "multipart/form-data"}
+        headers = {
+            "api-subscription-key": os.environ['SARVAM_API_KEY'],
+        }
 
         with open(filename, 'rb') as audio_file:
-            # files = {'audio': audio_file}
-            payload = {
-                "prompt": (None, "Translate it into hindi"),  # Plain text data
-                "file": ("audio_file.wav", audio_file, "audio/wav"),  # Audio file data with correct content-type
+            files = {
+                'file': (filename, audio_file, 'audio/wav')  # Provide the file name, file object, and MIME type
             }
-            response = requests.request("POST", endpoint_url, data=payload, headers=headers)
+            data = {
+                # 'prompt': 'Translate the input language into English',  # Include the prompt if provided
+                # 'model': 'saaras:v1'
+                'language_code': 'hi-IN',
+                'model': 'saarika:v1'
+            }
+            response = requests.request("POST", endpoint_url, data=data, files=files, headers=headers)
 
         if response.status_code == 200:
-            return response.json()['text']
+            return response.text
         else:
             return f"Error: {response.status_code} - {response.text}"
 
@@ -116,9 +127,18 @@ class AudioRecorderApp:
 
         self.status_label.config(text="Transcribing...")
         transcription = self.send_for_transcription(filename)
+        translated_text = llm_anthropic.invoke(
+            f"""Strictly convert this input sentence into English. Do not give anything excess in response apart from the translated text
+            Consider the following example:
+            Input: आज के समाचार बताओ Output: Tell me the news for today
+            Input: रिपोर्ट पीडीएफ फ़ाइल ढूंढो Output: Search for report.pdf
+            Input: डेस्कटॉप पर रिपोर्ट डॉट पीडीएफ को प्रिंट करो Output: Print the report.pdf on desktop
+            Input: {transcription} Output: """, max_tokens=50)
+        response = natural_language_research(translated_text.content)
 
         self.transcription_display.delete('1.0', tk.END)
-        self.transcription_display.insert(tk.END, transcription)
+        self.transcription_display.insert(tk.END,
+                                          f"Original {transcription} Translated: {translated_text.content} Response: {response}")
 
         self.status_label.config(text="Transcription complete")
         self.transcribe_button.config(state=tk.DISABLED)
