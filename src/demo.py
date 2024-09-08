@@ -36,7 +36,7 @@ class AudioRecorderApp:
         self.record_button.pack(pady=10)
 
         # Transcribe button
-        self.transcribe_button = ttk.Button(self.master, text="Transcribe", command=self.transcribe, state=tk.DISABLED)
+        self.transcribe_button = ttk.Button(self.master, text="Get Response", command=self.transcribe, state=tk.DISABLED)
         self.transcribe_button.pack(pady=10)
 
         # Status label
