@@ -74,10 +74,13 @@ class MathematicsExpert(Agent):
 class AIVA(Agent):
     def __init__(self):
         super().__init__(
-            role='Empathetic AI Assistant',
+            role='AI Assistant',
             goal="Help the user in the best possible manner",
             backstory="""
-            You are an AI assistant who is known to provide best assistant to the user
+            You are a virtual AI assistant that interacts with users in a witty, casual manner. 
+            Your role is to remind users about meetings (without taking any actions), tell jokes, share interesting facts, and engage in friendly conversation. 
+            You can acknowledge tasks but will decline those beyond imagination or possibility in a straightforward way. You keep track of previous conversations to maintain context. 
+            You can provide technical information with the same level of wit, but you avoid suggesting any actions or performing tasks.
             """,
             verbose=True,
             allow_delegation=False,
@@ -91,14 +94,15 @@ class Coder(Agent):
     def __init__(self):
         super().__init__(
             role='Python Coder',
-            goal="Generate the python code using PyAutoGUI for executing the request from user side. Only using keyboards based commmands of PyAutoGUI to complete the request",
+            goal="Generate the python code for keyboard actions using PyAutoGUI for executing the steps generated.",
             backstory="""
-                Expert at breaking down a request for windows system into simpler steps based steps using keyboard shortcuts, then writing the code for commands in PyAutoGUI. I only use keyboard commands to run the given query. Here's how I tackle these specific queries:
-              - Break down the user request into smaller steps and most easiest flows.
-              - Identify which keyboards keys are required to execute the workflow of the smaller step. To locate a folder/file always use file explorer search bar - Win + E and then Control + F.
-              - Write a python code for the given identified keyboards key using PyAutoGUI with 2 second delay after each step.
-              - Execute the generated python code.
-              - Synthesize information from all sources to provide a comprehensive and current report on the injury status of the player or team, with attention to the latest updates and expert opinions on recovery and potential game participation.
+                Act as an expert in automating Windows system tasks using keyboard shortcuts and PyAutoGUI. Follow this process:
+                
+                - Break down the user request into detailed, manageable steps, focusing on the simplest workflow.
+                - Identify and use the necessary keyboard shortcuts for each step. For file/folder navigation, use File Explorer with Win + E and Control + F for the search bar.
+                - Write Python code using PyAutoGUI that simulates keyboard actions, ensuring no mouse or cursor actions are included. Include error handling for cases such as files or folders not found and incorporate a 2-second delay between each step.
+                - Introspect and verify that all steps are correctly executed in the code. If any steps are missing or incorrect, adjust the process and code accordingly.
+                - Execute the Python code and provide the result.
             """,
             verbose=True,
             allow_delegation=False,
@@ -135,10 +139,11 @@ windows_route = Route(name="window_tasks", utterances=[
 ])
 
 aiva_route = Route(name="aiva", utterances=[
-    "aiva remind me of meeting with Ajay tomorrow 2 PM",
-    "aiva how are you?",
-    "aiva can you crack me some jokes?",
-    "aiva tell me some interesting facts.",
+    "Eva remind me of meeting with Ajay tomorrow 2 PM",
+    "Eva how are you?",
+    "Eva can you crack me some jokes?",
+    "Eva tell me some interesting facts."
+    "Set a reminder for tomorrow for Aadhaar update.",
 ])
 
 mathematic_route = Route(name="mathematics_tasks", utterances=[
@@ -257,7 +262,7 @@ def natural_language_research(request):
     task = agent_info['tasks']
     print("This is task")
     print(task)
-    if agent_instance == "aiva":
+    if route_choice == "aiva":
         previous_history = mem.search(query=request, user_id='Aditya')
         print("This is previous history: ", previous_history)
         mem.add_to_memory(inputs=request, user_id='Aditya', meta_data={})
