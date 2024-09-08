@@ -9,7 +9,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 from agents.main import llm_anthropic
 from agents.execute import natural_language_research
-import json
 
 load_dotenv()
 
@@ -122,56 +121,9 @@ class AudioRecorderApp:
         else:
             return f"Error: {response.status_code} - {response.text}"
 
-    def check_authorization(self, filename):
-         # The URL to which we're uploading the file
-        url = "http://164.52.208.125/upload"
-        
-        # Open the file in binary mode
-        with open(filename, 'rb') as file:
-            # Create a dictionary with the file to be uploaded
-            files = {'file': file}
-            
-            try:
-                # Send the POST request
-                response = requests.post(url, files=files)
-                
-                # Check if the request was successful
-                if response.status_code == 200:
-                    # Parse the JSON response
-                    result = json.loads(response.text)
-                    
-                    if 'result' in result:
-                        if result['result']:
-                            print("File uploaded successfully!")
-                        else:
-                            print("File upload was not successful.")
-                        return result['result']
-                    else:
-                        print("Unexpected response format.")
-                        return False
-                else:
-                    print(f"Failed to upload file. Status code: {response.status_code}")
-                    return False
-                    
-            except requests.exceptions.RequestException as e:
-                print(f"An error occurred while uploading the file: {e}")
-                return False
-            except json.JSONDecodeError:
-                print("Failed to parse the response as JSON.")
-                return False
-        
-
     def transcribe(self):
         self.status_label.config(text="Saving audio...")
         filename = self.save_audio()
-        
-        # Check if the user is authorized to upload the file
-        if self.check_authorization():
-            print("User is authorized to upload the file.")
-        else:
-            print("User is not authorized to upload the file.")
-            return
-        
 
         self.status_label.config(text="Transcribing...")
         transcription = self.send_for_transcription(filename)
